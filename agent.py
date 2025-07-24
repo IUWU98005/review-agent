@@ -1,7 +1,9 @@
 import os
+from pydoc import text
 from langchain.tools import tool
 from langchain_core.messages import HumanMessage
 from langchain_openai import ChatOpenAI
+from langchain.prompts import ChatPromptTemplate, prompt
 from langchain_community.tools import DuckDuckGoSearchRun
 from langgraph.prebuilt import create_react_agent
 from dotenv import load_dotenv
@@ -9,13 +11,22 @@ from stratz import get_player_data
 
 load_dotenv()
 
+# prompt = '根据Dota2比赛数据, 专业、犀利地评价该玩家的表现, 指出优点和不足, 并给出改进建议'
+
+# prompt_template = ChatPromptTemplate.format_messages(
+#     [
+#         ('system', prompt),
+#         ('human', '{content}')
+#     ]
+# )
+
 model = ChatOpenAI(
     model="glm-4-flash",
     openai_api_base = "https://open.bigmodel.cn/api/paas/v4",
     api_key=os.getenv("OPENAI_API_KEY"),
 )
 
-tools = [DuckDuckGoSearchRun(), get_player_data]
+tools = [get_player_data]
 
 
 def manual_agent(content: str, model: ChatOpenAI, tools: list[tool]) -> dict:
@@ -42,3 +53,12 @@ def manual_agent(content: str, model: ChatOpenAI, tools: list[tool]) -> dict:
 #         tools_resp[tool_name] = tool_resp
 #     return tools_resp
 
+# def output_parser(output: str):
+#     parser_model =ChatOpenAI(
+#         model = 'glm-3-turbo',
+#         temperature=0.2,
+#         openai_api_base = "https://open.bigmodel.cn/api/paas/v4",
+#         api_key=os.getenv("OPENAI_API_KEY"),
+#     )
+#     message = f"你需要将传入的文本改写，尽可能自然。 这是你需要改写的文本：`{text}`"
+#     return parser_model.invoke(message.format(text=output))

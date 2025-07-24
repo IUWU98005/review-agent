@@ -8,10 +8,10 @@ from dotenv import load_dotenv
 @tool
 def get_player_data(steam_id: int, match_id: int):
     """
-    获取玩家在指定比赛中的数据
+    获取玩家在指定比赛中的数据(playerSlot, kills, deaths, assists, networth, numLastHits, numDenies, level, heroDamage, towerDamage, heroHealing)
     :param steam_id: 玩家的 steam id
     :param match_id: 比赛 id
-    :return: 包含玩家数据的字典
+    :return: 包含玩家数据的元组
     """
 
     load_dotenv()
