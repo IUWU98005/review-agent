@@ -1,15 +1,11 @@
 import streamlit as st
-import os
-# import json
-# import uuid
-from datetime import datetime
 from dotenv import load_dotenv
-from agent import manual_agent, model, tools
+from agent import agent, model, tools
 
 load_dotenv()
 
 st.set_page_config(
-    page_title="Dota2 锐评小助手",
+    page_title="锐评小助手",
 )
 
 # ========== 对话历史功能 - 暂时注释 ==========
@@ -76,7 +72,7 @@ st.markdown("""
         max-width: 80%;
         margin-left: auto;
         margin-right: 0;
-        text-align: right;
+        text-align: left;
         float: right;
         clear: both;
         word-wrap: break-word;
@@ -263,7 +259,7 @@ if user_input:
     # AI 处理
     with st.spinner("正在分析中..."):
         try:
-            response = manual_agent(user_input, model, tools)
+            response = agent(user_input, model, tools)
             ai_response = response['messages'][-1].content
             
             # 添加AI回复

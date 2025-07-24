@@ -7,6 +7,7 @@ from langchain.prompts import ChatPromptTemplate, prompt
 from langchain_community.tools import DuckDuckGoSearchRun
 from langgraph.prebuilt import create_react_agent
 from dotenv import load_dotenv
+
 from stratz import get_player_data
 
 load_dotenv()
@@ -29,7 +30,7 @@ model = ChatOpenAI(
 tools = [get_player_data]
 
 
-def manual_agent(content: str, model: ChatOpenAI, tools: list[tool]) -> dict:
+def agent(content: str, model: ChatOpenAI, tools: list[tool]) -> dict:
     agent = create_react_agent(model, tools)
     resp = agent.invoke({"messages": [HumanMessage(content)]})
     return resp
