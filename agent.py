@@ -1,10 +1,8 @@
 import os
-from pydoc import text
 from langchain.tools import tool
+from langchain.prompts import ChatPromptTemplate
 from langchain_core.messages import HumanMessage
 from langchain_openai import ChatOpenAI
-from langchain.prompts import ChatPromptTemplate, prompt
-from langchain_community.tools import DuckDuckGoSearchRun
 from langgraph.prebuilt import create_react_agent
 from dotenv import load_dotenv
 
@@ -12,18 +10,17 @@ from stratz import get_player_data
 
 load_dotenv()
 
-# prompt = '根据Dota2比赛数据, 专业、犀利地评价该玩家的表现, 指出优点和不足, 并给出改进建议'
+prompt = (
+    "根据Dota2的比赛数据, 专业、犀利地评价该玩家的表现, 指出优点和不足, 并给出改进建议"
+)
 
-# prompt_template = ChatPromptTemplate.format_messages(
-#     [
-#         ('system', prompt),
-#         ('human', '{content}')
-#     ]
-# )
+prompt_template = ChatPromptTemplate.from_messages(
+    [("system", prompt), ("human", "{new_message}")]
+)
 
 model = ChatOpenAI(
     model="glm-4-flash",
-    openai_api_base = "https://open.bigmodel.cn/api/paas/v4",
+    openai_api_base="https://open.bigmodel.cn/api/paas/v4",
     api_key=os.getenv("OPENAI_API_KEY"),
 )
 
@@ -34,6 +31,7 @@ def agent(content: str, model: ChatOpenAI, tools: list[tool]) -> dict:
     agent = create_react_agent(model, tools)
     resp = agent.invoke({"messages": [HumanMessage(content)]})
     return resp
+
 
 # def review_agent(query: str, model: ChatOpenAI, tools: list[tool]):
 #     model_with_tools = model.bind_tools(tools)
