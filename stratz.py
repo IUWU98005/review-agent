@@ -14,7 +14,7 @@ def get_player_data(steam_id: int, match_id: int):
     :return: 包含玩家数据的字典
     """
 
-    print(f"🔧 [TOOL] get_player_data 被调用")
+    print("🔧 [TOOL] get_player_data 被调用")
     print(f"📊 [TOOL] 参数: steam_id={steam_id}, match_id={match_id}")
 
     load_dotenv()
@@ -103,7 +103,7 @@ def get_player_data(steam_id: int, match_id: int):
 
         if response.status_code == 200:
             data = response.json()
-            print(f"✅ [TOOL] 成功获取数据")
+            print("✅ [TOOL] 成功获取数据")
 
             # 检查是否有错误
             if "errors" in data:

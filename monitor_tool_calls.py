@@ -4,7 +4,6 @@
 用于在 Streamlit 应用运行时监控 tool 的调用情况
 """
 
-import sys
 import time
 from datetime import datetime
 
@@ -73,7 +72,7 @@ def main():
             time.sleep(1)
     except KeyboardInterrupt:
         duration = datetime.now() - monitor.start_time
-        print(f"\n\n📊 监控统计:")
+        print("\n\n📊 监控统计:")
         print(f"监控时长: {duration}")
         print(f"总调用次数: {monitor.call_count}")
         print("监控已停止")
