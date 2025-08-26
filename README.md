@@ -1,253 +1,239 @@
-## 项目概述
+# 🔥 DOTA2 锐评小助手 🎮
 
-本项目是一个基于 LangChain 框架开发的智能体系统，专门用于分析和评价 Dota2 玩家在特定比赛中的表现。系统通过调用 STRATZ API 获取玩家比赛数据，并利用大语言模型对玩家的游戏表现进行专业、犀利的分析和评价。
+一个基于AI的DOTA2赛后表现分析工具，专业分析 · 犀利点评 · 网络用语拉满！
 
-项目地址：<https://github.com/IUWU98005/dota2-player-review>
+## ✨ 功能特色
 
-## 技术架构
+### 🎯 三种锐评模式
+- **综合分析模式**: 客观专业的数据分析，指出优缺点和改进建议
+- **彩虹屁模式**: 疯狂夸奖玩家表现，网络用语拉满，让你感觉自己就是电竞天才
+- **毒舌模式**: 犀利吐槽玩家表现，幽默风趣不过分，让人笑出声
 
-### 核心技术栈
+### 📊 数据分析
+- 获取详细的比赛数据（击杀、死亡、助攻、经济、补刀等）
+- 智能分析玩家表现和操作亮点
+- 对比队友和对手数据
+- 提供专业的改进建议
 
-- LangChain : 智能体框架和工具链
-- LangGraph : 用于创建 ReAct 智能体
-- OpenAI API : 大语言模型服务（支持智谱 GLM-4-Flash）
-- DeepSeek API : 用于生成玩家表现评价
-- STRATZ API : Dota2 比赛数据源
-- CloudScraper : 处理反爬虫机制
+### 🎨 用户体验
+- 现代化的Streamlit界面
+- 响应式设计，支持暗色模式
+- 快速分析功能，一键生成锐评
+- 智能对话，自动识别分析模式
 
-### 项目结构
+## 🚀 快速开始
 
+### 环境要求
+- Python 3.8+
+- Streamlit
+- 相关依赖包
+
+### 安装步骤
+
+1. 克隆项目
 ```bash
-dota2-player-review/
-├── .gitignore          # Git 忽略文件配置
-├── agent.py            # LangChain 智能体核心模块
-├── analysis.py         # 玩家表现分析模块
-└── stratz.py          # STRATZ API 数据获取工具
+git clone <repository-url>
+cd dota2-review-assistant
 ```
 
-## 核心模块详解
-
-### 1. 智能体模块 (agent.py)
-
-`agent.py` 是项目的核心智能体模块，主要功能包括：
-
-```python
-import os
-from langchain.tools import tool
-from langchain_core.messages import HumanMessage
-from langchain_openai import ChatOpenAI
-from langchain_community.tools import DuckDuckGoSearchRun
-from langgraph.prebuilt import create_react_agent
-from dotenv import load_dotenv
-from stratz import get_player_data
-
-# 模型配置
-model = ChatOpenAI(
-    model="glm-4-flash",
-    openai_api_base = "https://open.bigmodel.cn/api/paas/v4",
-    api_key=os.getenv("OPENAI_API_KEY"),
-)
-
-# 工具集成
-tools = [DuckDuckGoSearchRun(), get_player_data]
-
-# 手动智能体函数
-def manual_agent(content: str, model: ChatOpenAI, tools: list[tool]) -> dict:
-    agent = create_react_agent(model, tools)
-    resp = agent.invoke({"messages": [HumanMessage(content)]})
-    return resp
-```
-
-特性：
-
-- 集成智谱 GLM-4-Flash 模型
-- 支持 DuckDuckGo 搜索工具
-- 集成自定义的 Dota2 数据获取工具
-- 使用 LangGraph 的 ReAct 智能体架构
-
-### 2. 数据获取模块 (stratz.py)
-
-`stratz.py` 负责从 STRATZ API 获取 Dota2 比赛数据：
-
-```python
-@tool
-def get_player_data(steam_id: int, match_id: int):
-    """
-    获取玩家在指定比赛中的数据
-    :param steam_id: 玩家的 steam id
-    :param match_id: 比赛 id
-    :return: 包含玩家数据的字典
-    """
-    # GraphQL 查询
-    query = """
-    query GetRecentMatches($id: Long!, $steamAccountId: Long!){
-        match(id: $id) {
-            durationSeconds
-            players(steamAccountId: $steamAccountId) {
-                playerSlot
-                kills
-                deaths
-                assists
-                networth
-                numLastHits
-                numDenies
-                level
-                heroDamage
-                towerDamage
-                heroHealing
-            }
-        }
-    }
-    """
-```
-
-功能特点：
-
-- 使用 @tool 装饰器集成到 LangChain 工具链
-- 通过 GraphQL 查询获取详细的比赛数据
-- 使用 CloudScraper 绕过反爬虫机制
-- 获取包括 KDA、经济、伤害等关键指标
-
-### 3. 分析评价模块 (analysis.py)
-
-`analysis.py` 实现玩家表现的智能分析：
-
-```python
-def review_player(steam_id: int, match_id: int):
-    player_data = stratz.get_player_data(steam_id, match_id)
-    
-    # 构建分析提示词
-    prompt = f"""
-    请根据以下Dota2比赛数据, 专业、犀利地评价该玩家的表现, 指出优点和不足, 并给出改进建议：
-    - 击杀: {player['kills']}
-    - 死亡: {player['deaths']}
-    - 助攻: {player['assists']}
-    - 补刀: {player['numLastHits']}
-    - 反补: {player['numDenies']}
-    - 等级: {player['level']}
-    - 净资产: {player['networth']}
-    - 英雄伤害: {player['heroDamage']}
-    - 建筑伤害: {player['towerDamage']}
-    - 治疗量: {player['heroHealing']}
-    - 比赛时长: {match['durationSeconds']//60}分{match['durationSeconds']%60}秒
-    """
-    
-    # 调用 DeepSeek API 生成评价
-    # ... API 调用逻辑
-```
-
-核心功能：
-
-- 整合比赛数据生成结构化分析提示
-- 调用 DeepSeek API 进行智能分析
-- 提供专业的游戏表现评价和改进建议
-
-## 数据指标体系
-
-系统分析的核心数据指标包括：
-
-### 战斗表现
-
-- KDA : 击杀(kills)、死亡(deaths)、助攻(assists)
-- 伤害输出 : 英雄伤害(heroDamage)、建筑伤害(towerDamage)
-- 支援能力 : 治疗量(heroHealing)
-
-### 经济发展
-
-- 补刀效率 : 正补(numLastHits)、反补(numDenies)
-- 经济状况 : 净资产(networth)、等级(level)
-
-### 时间维度
-
-- 比赛时长 : 用于计算效率指标
-- 发育节奏 : 结合时长分析经济和等级发展
-
-## 环境配置
-
-### 必需的环境变量
-
-```env
-# .env 文件配置
-OPENAI_API_KEY=your_zhipu_api_key
-DEEPSEEK_API_KEY=your_deepseek_api_key
-STRATZ_API_KEY=your_stratz_api_key
-STEAM_ACCOUNT_ID=your_steam_id
-MATCH_ID=target_match_id
-```
-
-依赖安装
-
+2. 安装依赖
 ```bash
-pip install langchain langchain-openai langchain-community
+pip install streamlit langchain langchain-openai langchain-community
 pip install langgraph python-dotenv cloudscraper requests
 ```
 
-## 使用方式
+3. 配置环境变量
+创建 `.env` 文件并添加：
+```
+OPENAI_API_KEY=your_openai_api_key
+STRATZ_API_KEY=your_stratz_api_key
+```
 
-1. 直接分析模式
+4. 配置环境变量
+```bash
+# 复制环境变量模板
+cp .env.example .env
 
-    ```python
-    from analysis import review_player
-    import os
+# 编辑 .env 文件，填入你的API密钥
+# OPENAI_API_KEY=your_openai_api_key
+# STRATZ_API_KEY=your_stratz_api_key
+```
 
-    steam_id = int(os.getenv("STEAM_ACCOUNT_ID"))
-    match_id = int(os.getenv("MATCH_ID"))
-    review = review_player(steam_id, match_id)
-    print("AI锐评:", review)
-    ```
+5. 测试配置（可选）
+```bash
+python test_config.py
+```
 
-2. 智能体交互模式
+6. 运行应用
+```bash
+# 方式1: 使用启动脚本（推荐）
+python run.py
 
-    ```python
-    from agent import manual_agent, model, tools
+# 方式2: 直接运行Streamlit
+streamlit run streamlit_app.py
+```
 
-    query = "分析玩家 123456789 在比赛 7891234567 中的表现"
-    response = manual_agent(query, model, tools)
-    print(response)
-    ```
+## 📖 使用说明
 
-## 技术亮点
+### 快速分析
+1. 在侧边栏输入玩家Steam ID
+2. 输入比赛ID
+3. 选择锐评模式（综合分析/彩虹屁模式/毒舌模式）
+4. 点击"开始锐评"
 
-### 1. 智能体架构设计
+### 对话分析
+直接在聊天框输入问题，AI会智能识别你的意图：
+- 包含"夸"、"吹"、"厉害"等词汇 → 自动切换到彩虹屁模式
+- 包含"批评"、"吐槽"、"菜"等词汇 → 自动切换到毒舌模式
+- 其他情况 → 使用综合分析模式
 
-- 采用 LangGraph 的 ReAct 模式，支持推理-行动-观察循环
-- 工具链集成，支持搜索和数据获取的组合使用
-- 模块化设计，易于扩展新的分析工具
+### 示例输入
+```
+分析玩家123456789在比赛7891234567中的表现
+夸夸玩家123456789在比赛7891234567中的神仙操作
+吐槽一下玩家123456789在比赛7891234567中的菜鸡操作
+```
 
-### 2. 多模型集成
+## 🛠️ 技术架构
 
-- 智谱 GLM-4-Flash: 用于智能体推理和工具调用
-- DeepSeek: 专门用于生成专业的游戏分析评价
-- 模型选择针对不同任务进行优化
+### 核心组件
+- **streamlit_app.py**: 前端界面和用户交互
+- **agent.py**: AI分析引擎，包含三种不同的分析模式
+- **stratz.py**: DOTA2数据获取工具，调用Stratz API
 
-### 3. 数据获取优化
+### AI模型
+- 使用GLM-4-Flash模型进行自然语言处理
+- 基于LangChain框架构建智能代理
+- 支持工具调用和多轮对话
 
-- 使用 CloudScraper 处理反爬虫机制
-- GraphQL 查询精确获取所需数据字段
-- 错误处理和数据验证机制
+### 数据来源
+- Stratz API: 获取详细的比赛和玩家数据
+- 支持实时数据查询和历史数据分析
 
-## 扩展方向
+## 🎨 界面预览
 
-### 1. 功能扩展
+- 🌈 现代化的渐变色设计
+- 💬 类似聊天软件的对话界面
+- 📱 响应式布局，支持移动端
+- 🌙 自动适配暗色模式
 
-- 支持多场比赛的综合分析
-- 添加英雄特定的评价标准
-- 集成更多游戏数据源（如 OpenDota）
+## 🔧 配置说明
 
-### 2. 分析深度
+### API密钥配置
+需要获取以下API密钥：
+1. **OpenAI API Key**: 用于AI模型调用（支持智谱GLM-4-Flash）
+2. **Stratz API Key**: 用于获取DOTA2数据
 
-- 引入机器学习模型进行表现预测
-- 添加与职业选手的对比分析
-- 实现团队配合度分析
+### 环境变量
+在 `.env` 文件中配置：
+```
+OPENAI_API_KEY=your_openai_api_key
+STRATZ_API_KEY=your_stratz_api_key
+```
 
-### 3. 用户体验
+## 🎯 核心功能详解
 
-- 开发 Web 界面
-- 支持批量分析和报告生成
-- 添加可视化图表展示
+### 数据获取模块 (stratz.py)
+```python
+@tool
+def get_player_data(steam_id: int, match_id: int):
+    """获取玩家在指定比赛中的详细数据"""
+    # 通过GraphQL查询获取比赛数据
+    # 包括KDA、经济、伤害、英雄信息等
+```
 
-## 总结
+### AI分析引擎 (agent.py)
+```python
+# 三种不同的分析模式
+def agent(content: str, model: ChatOpenAI, tools: list[tool]) -> dict:
+    """综合分析模式 - 客观专业"""
 
-本项目展示了如何使用 LangChain 框架构建专业的游戏数据分析智能体。通过整合多个 API 服务和大语言模型，实现了从数据获取到智能分析的完整流程。项目架构清晰，模块化程度高，为游戏数据分析领域的 AI 应用提供了良好的参考实现。
+def praise_agent(content: str, model: ChatOpenAI, tools: list[tool]) -> dict:
+    """彩虹屁模式 - 疯狂夸奖"""
 
-该系统不仅能够提供客观的数据分析，还能生成具有专业性和针对性的改进建议，为 Dota2 玩家的技能提升提供了有价值的工具支持。
+def roast_agent(content: str, model: ChatOpenAI, tools: list[tool]) -> dict:
+    """毒舌模式 - 犀利吐槽"""
+```
+
+### 数据指标体系
+- **战斗表现**: KDA、伤害输出、支援能力
+- **经济发展**: 补刀效率、净资产、等级
+- **英雄信息**: 英雄选择、装备搭配
+- **时间维度**: 比赛时长、发育节奏
+
+## 🤝 贡献指南
+
+欢迎提交Issue和Pull Request！
+
+### 开发环境设置
+1. Fork项目
+2. 创建功能分支
+3. 提交更改
+4. 创建Pull Request
+
+## 📄 许可证
+
+MIT License
+
+## 🎯 未来计划
+
+- [ ] 支持更多游戏数据源
+- [ ] 添加数据可视化图表
+- [ ] 支持批量分析多场比赛
+- [ ] 添加玩家历史表现趋势分析
+- [ ] 支持自定义锐评风格
+- [ ] 添加语音播报功能
+- [ ] 支持团队分析和对比
+- [ ] 添加英雄特定的评价标准
+
+## 🔧 故障排除
+
+### 常见问题
+
+**Q: 出现 "create_react_agent() got an unexpected keyword argument" 错误**
+A: 这是LangChain版本兼容性问题，已在最新代码中修复。请确保使用最新版本的代码。
+
+**Q: API连接失败**
+A: 
+1. 检查 `.env` 文件是否正确配置
+2. 确认API密钥有效且有足够的配额
+3. 运行 `python test_config.py` 进行诊断
+
+**Q: Stratz API返回空数据**
+A: 
+1. 确认玩家ID和比赛ID格式正确
+2. 检查比赛是否存在且为公开比赛
+3. 确认Stratz API密钥权限
+
+**Q: 界面显示异常**
+A: 
+1. 清除浏览器缓存
+2. 尝试无痕模式
+3. 检查Streamlit版本是否兼容
+
+### 获取API密钥
+
+**智谱AI (GLM-4-Flash)**
+1. 访问 https://open.bigmodel.cn/
+2. 注册账号并实名认证
+3. 创建API密钥
+
+**Stratz API**
+1. 访问 https://stratz.com/
+2. 注册账号
+3. 在开发者页面申请API密钥
+
+---
+
+**让AI帮你分析DOTA2表现，专业锐评，网络用语拉满！** 🔥
+
+## 🔥 锐评示例
+
+### 彩虹屁模式示例
+> "兄弟你这波操作简直绝绝子！15个击杀YYDS，这伤害打得对面怀疑人生，纯纯的carry全场！这就是传说中的电竞天才吧，我上我真不行！"
+
+### 毒舌模式示例  
+> "兄弟，这0-10-2的战绩是认真的吗？补刀被对面压了一倍，这经济差距我都不好意思说。不过没关系，菜是原罪，但菜得这么有特色也是一种天赋！"
+
+### 综合分析示例
+> "本场比赛表现中规中矩，KDA为8-3-12，参团率较高。补刀效率需要提升，建议加强对线期的基本功练习。团战定位不错，但需要注意走位避免不必要的死亡。"

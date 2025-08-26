@@ -1,279 +1,190 @@
 import streamlit as st
 from dotenv import load_dotenv
-from agent import agent, model, tools
+from agent import agent, model, tools, praise_agent, roast_agent
 
 load_dotenv()
 
 st.set_page_config(
-    page_title="锐评小助手",
+    page_title="DOTA2 锐评小助手",
+    page_icon="🎮",
+    layout="centered",
+    initial_sidebar_state="collapsed",
 )
 
-# ========== 对话历史功能 - 暂时注释 ==========
-# # 对话数据文件路径
-# CHATS_FILE = "chats_history.json"
-
-# def load_chats():
-#     """加载所有对话历史"""
-#     if os.path.exists(CHATS_FILE):
-#         try:
-#             with open(CHATS_FILE, 'r', encoding='utf-8') as f:
-#                 return json.load(f)
-#         except:
-#             return {}
-#     return {}
-
-# def save_chats(chats):
-#     """保存所有对话历史"""
-#     with open(CHATS_FILE, 'w', encoding='utf-8') as f:
-#         json.dump(chats, f, ensure_ascii=False, indent=2)
-
-# def create_new_chat():
-#     """创建新对话"""
-#     chat_id = str(uuid.uuid4())
-#     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
-#     return {
-#         "id": chat_id,
-#         "title": f"新对话 {timestamp}",
-#         "created_at": timestamp,
-#         "messages": []
-#     }
-
-# def get_chat_title(messages):
-#     """根据第一条消息生成对话标题"""
-#     if messages:
-#         first_message = messages[0]["content"]
-#         # 取前20个字符作为标题
-#         title = first_message[:20]
-#         if len(first_message) > 20:
-#             title += "..."
-#         return title
-#     return "新对话"
-# ========== 对话历史功能结束 ==========
 
 st.markdown(
     """
 <style>
-    /* 主标题样式 - 适配暗色模式 */
-    .main-header {
-        font-size: 2.5rem;
-        font-weight: 700;
-        color: var(--text-color);
-        text-align: center;
-        margin-bottom: 2rem;
-    }
+    /* 隐藏Streamlit默认元素 */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
     
-    /* 用户消息样式 - 暗色模式适配 */
+    /* 简洁的消息样式 */
     .user-message {
-        background-color: var(--user-message-bg);
-        color: var(--user-message-text);
-        border-radius: 12px;
+        background-color: #f0f0f0;
+        color: #333;
+        border-radius: 8px;
         padding: 12px 16px;
         margin: 8px 0;
-        display: inline-block;
         max-width: 80%;
         margin-left: auto;
-        margin-right: 0;
-        text-align: left;
-        float: right;
-        clear: both;
-        word-wrap: break-word;
-        border: 1px solid var(--border-color);
+        font-size: 0.9rem;
+        line-height: 1.4;
+        border: 1px solid #e0e0e0;
     }
     
-    /* AI消息样式 - 暗色模式适配 */
     .ai-message {
-        background-color: var(--ai-message-bg);
-        color: var(--ai-message-text);
-        border-radius: 12px;
+        background-color: #ffffff;
+        color: #333;
+        border-radius: 8px;
         padding: 12px 16px;
         margin: 8px 0;
-        display: inline-block;
         max-width: 80%;
-        margin-left: 0;
-        margin-right: auto;
-        border: 1px solid var(--border-color);
-        float: left;
-        clear: both;
-        word-wrap: break-word;
+        font-size: 0.9rem;
+        line-height: 1.5;
+        border: 1px solid #e0e0e0;
     }
     
     .message-container {
-        width: 100%;
-        overflow: hidden;
-        margin: 8px 0;
+        margin: 12px 0;
+        display: flex;
+        flex-direction: column;
     }
     
-    /* 按钮样式 */
+    .user-container {
+        align-items: flex-end;
+    }
+    
+    .ai-container {
+        align-items: flex-start;
+    }
+    
+    /* 暗色模式 */
+    [data-theme="dark"] .user-message {
+        background-color: #2d2d2d;
+        color: #e0e0e0;
+        border-color: #404040;
+    }
+    
+    [data-theme="dark"] .ai-message {
+        background-color: #1a1a1a;
+        color: #e0e0e0;
+        border-color: #404040;
+    }
+    
+    /* 简化按钮样式 */
     .stButton > button {
-        background-color: #666;
-        color: white;
-        border: none;
-        border-radius: 8px;
+        border-radius: 6px;
+        border: 1px solid #d0d0d0;
+        background-color: #ffffff;
+        color: #333;
         padding: 0.5rem 1rem;
         font-weight: 500;
-        margin: 4px 0;
     }
     
     .stButton > button:hover {
-        background-color: #555;
+        background-color: #f5f5f5;
+        border-color: #b0b0b0;
     }
     
-    /* 亮色模式变量 */
-    :root {
-        --text-color: #333;
-        --user-message-bg: #e3f2fd;
-        --user-message-text: #1565c0;
-        --ai-message-bg: #f5f5f5;
-        --ai-message-text: #333;
-        --border-color: #ddd;
+    /* 主按钮样式 */
+    .stButton > button[kind="primary"] {
+        background-color: #007acc;
+        color: white;
+        border-color: #007acc;
     }
     
-    /* 暗色模式变量 */
-    @media (prefers-color-scheme: dark) {
-        :root {
-            --text-color: #e0e0e0;
-            --user-message-bg: #1e3a8a;
-            --user-message-text: #bfdbfe;
-            --ai-message-bg: #374151;
-            --ai-message-text: #f3f4f6;
-            --border-color: #4b5563;
-        }
+    .stButton > button[kind="primary"]:hover {
+        background-color: #005a9e;
+        border-color: #005a9e;
     }
     
-    /* Streamlit暗色模式检测 */
-    [data-theme="dark"] {
-        --text-color: #e0e0e0;
-        --user-message-bg: #1e3a8a;
-        --user-message-text: #bfdbfe;
-        --ai-message-bg: #374151;
-        --ai-message-text: #f3f4f6;
-        --border-color: #4b5563;
+    /* 输入框简化 */
+    .stTextInput > div > div > input {
+        border-radius: 6px;
+        border: 1px solid #d0d0d0;
+        padding: 8px 12px;
     }
     
-    /* 强制暗色模式样式（针对Streamlit特殊情况） */
-    .stApp[data-theme="dark"] .main-header,
-    .stApp[data-theme="dark"] .user-message,
-    .stApp[data-theme="dark"] .ai-message {
-        color: var(--text-color) !important;
-    }
-    
-    .stApp[data-theme="dark"] .user-message {
-        background-color: var(--user-message-bg) !important;
-        color: var(--user-message-text) !important;
-        border-color: var(--border-color) !important;
-    }
-    
-    .stApp[data-theme="dark"] .ai-message {
-        background-color: var(--ai-message-bg) !important;
-        color: var(--ai-message-text) !important;
-        border-color: var(--border-color) !important;
+    .stSelectbox > div > div > select {
+        border-radius: 6px;
+        border: 1px solid #d0d0d0;
     }
 </style>
 """,
     unsafe_allow_html=True,
 )
 
-st.markdown('<h1 class="main-header">Dota2 锐评小助手</h1>', unsafe_allow_html=True)
+st.title("DOTA2 锐评小助手")
+st.caption("专业分析玩家表现，支持多种评价风格")
 
 # ========== 简化的会话状态管理 ==========
 # 初始化简单的消息历史
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# ========== 侧边栏 - 简化功能 ==========
-with st.sidebar:
-    st.markdown("### 设置")
+# ========== 快速分析区域 ==========
+with st.expander("快速分析", expanded=False):
+    col1, col2 = st.columns(2)
 
-    # 清除对话按钮
+    with col1:
+        player_id = st.text_input("玩家Steam ID", placeholder="123456789")
+
+    with col2:
+        match_id = st.text_input("比赛ID", placeholder="7891234567")
+
+    analysis_mode = st.selectbox(
+        "分析模式", ["综合分析", "彩虹屁模式", "毒舌模式"], index=0
+    )
+
+    if st.button("开始分析", type="primary"):
+        if player_id and match_id:
+            if analysis_mode == "综合分析":
+                query = f"分析玩家{player_id}在比赛{match_id}中的表现"
+            elif analysis_mode == "彩虹屁模式":
+                query = (
+                    f"夸奖玩家{player_id}在比赛{match_id}中的亮眼表现，用网络用语吹爆他"
+                )
+            else:
+                query = (
+                    f"批评玩家{player_id}在比赛{match_id}中的表现，用网络用语狠狠吐槽"
+                )
+
+            st.session_state.quick_query = query
+            st.rerun()
+        else:
+            st.error("请输入玩家ID和比赛ID")
+
+# 清除对话按钮
+if st.session_state.messages:
     if st.button("清除对话"):
         st.session_state.messages = []
         st.rerun()
 
-# ========== 对话历史功能 - 暂时注释 ==========
-# # 初始化会话状态
-# if 'chats' not in st.session_state:
-#     st.session_state.chats = load_chats()
 
-# if 'current_chat_id' not in st.session_state:
-#     # 如果没有对话，创建一个新的
-#     if not st.session_state.chats:
-#         new_chat = create_new_chat()
-#         st.session_state.chats[new_chat["id"]] = new_chat
-#         st.session_state.current_chat_id = new_chat["id"]
-#     else:
-#         # 选择最新的对话
-#         latest_chat_id = max(st.session_state.chats.keys(),
-#                            key=lambda x: st.session_state.chats[x]["created_at"])
-#         st.session_state.current_chat_id = latest_chat_id
+# ========== 主对话区域 ==========
 
-# # 侧边栏 - 对话管理
-# with st.sidebar:
-#     st.markdown("### 对话管理")
+# 处理快速查询
+if hasattr(st.session_state, "quick_query"):
+    user_input = st.session_state.quick_query
+    delattr(st.session_state, "quick_query")
 
-#     # 新建对话按钮
-#     if st.button("新建对话"):
-#         new_chat = create_new_chat()
-#         st.session_state.chats[new_chat["id"]] = new_chat
-#         st.session_state.current_chat_id = new_chat["id"]
-#         save_chats(st.session_state.chats)
-#         st.rerun()
-
-#     st.markdown("### 对话历史")
-
-#     # 显示所有对话
-#     if st.session_state.chats:
-#         # 按创建时间排序
-#         sorted_chats = sorted(st.session_state.chats.items(),
-#                             key=lambda x: x[1]["created_at"], reverse=True)
-
-#         for chat_id, chat_data in sorted_chats:
-#             # 生成对话标题
-#             if chat_data["messages"]:
-#                 title = get_chat_title(chat_data["messages"])
-#                 chat_data["title"] = title
-
-#             # 对话项
-#             if st.button(chat_data["title"], key=f"chat_{chat_id}",
-#                         help=f"创建时间: {chat_data['created_at']}"
-#                         ):
-#                 st.session_state.current_chat_id = chat_id
-#                 st.rerun()
-# ========== 对话历史功能结束 ==========
-
-# ========== 主对话区域 - 简化版本 ==========
-
-# 显示对话历史
-for message in st.session_state.messages:
-    if message["role"] == "user":
-        st.markdown(
-            f'<div class="message-container"><div class="user-message">User: {message["content"]}</div></div>',
-            unsafe_allow_html=True,
-        )
-    else:
-        st.markdown(
-            f'<div class="message-container"><div class="ai-message">Chat: {message["content"]}</div></div>',
-            unsafe_allow_html=True,
-        )
-
-# 输入框
-user_input = st.chat_input(
-    "请输入您的问题, 例如: 分析玩家123456789在比赛7891234567中的表现"
-)
-
-if user_input:
     # 添加用户消息
     st.session_state.messages.append({"role": "user", "content": user_input})
 
-    # 显示用户消息
-    st.markdown(
-        f'<div class="message-container"><div class="user-message">{user_input}</div></div>',
-        unsafe_allow_html=True,
-    )
+    # 确定使用哪个agent
+    if "夸奖" in user_input or "吹爆" in user_input:
+        agent_func = praise_agent
+    elif "批评" in user_input or "吐槽" in user_input:
+        agent_func = roast_agent
+    else:
+        agent_func = agent
 
     # AI 处理
     with st.spinner("正在分析中..."):
         try:
-            response = agent(user_input, model, tools)
+            response = agent_func(user_input, model, tools)
             ai_response = response["messages"][-1].content
 
             # 添加AI回复
@@ -281,10 +192,70 @@ if user_input:
                 {"role": "assistant", "content": ai_response}
             )
 
-            # 显示AI回复
-            st.markdown(
-                f'<div class="message-container"><div class="ai-message">🤖 {ai_response}</div></div>',
-                unsafe_allow_html=True,
+        except Exception as e:
+            error_msg = f"抱歉，处理您的请求时出现错误：{str(e)}"
+            st.session_state.messages.append(
+                {"role": "assistant", "content": error_msg}
+            )
+
+    st.rerun()
+
+# 如果没有对话历史，显示简单说明
+if not st.session_state.messages:
+    st.info("💡 输入问题开始对话，或使用上方的快速分析功能")
+
+    with st.expander("使用示例"):
+        st.markdown(
+            """
+        **综合分析：** 分析玩家123456789在比赛7891234567中的表现
+        
+        **彩虹屁模式：** 夸夸玩家123456789的神仙操作
+        
+        **毒舌模式：** 吐槽玩家123456789的菜鸡表现
+        """
+        )
+
+# 显示对话历史
+for message in st.session_state.messages:
+    if message["role"] == "user":
+        st.markdown(
+            f'<div class="message-container user-container"><div class="user-message">{message["content"]}</div></div>',
+            unsafe_allow_html=True,
+        )
+    else:
+        st.markdown(
+            f'<div class="message-container ai-container"><div class="ai-message">{message["content"]}</div></div>',
+            unsafe_allow_html=True,
+        )
+
+# 输入框
+user_input = st.chat_input("输入你的问题...")
+
+if user_input:
+    # 添加用户消息
+    st.session_state.messages.append({"role": "user", "content": user_input})
+
+    # 智能判断使用哪个agent
+    if any(
+        keyword in user_input for keyword in ["夸", "吹", "彩虹屁", "厉害", "牛", "强"]
+    ):
+        agent_func = praise_agent
+    elif any(
+        keyword in user_input for keyword in ["批评", "吐槽", "菜", "差", "垃圾", "坑"]
+    ):
+        agent_func = roast_agent
+    else:
+        agent_func = agent
+
+    # AI 处理
+    with st.spinner("正在分析中..."):
+        try:
+            response = agent_func(user_input, model, tools)
+            ai_response = response["messages"][-1].content
+
+            # 添加AI回复
+            st.session_state.messages.append(
+                {"role": "assistant", "content": ai_response}
             )
 
         except Exception as e:
@@ -292,65 +263,5 @@ if user_input:
             st.session_state.messages.append(
                 {"role": "assistant", "content": error_msg}
             )
-            st.markdown(
-                f'<div class="message-container"><div class="ai-message">🤖 {error_msg}</div></div>',
-                unsafe_allow_html=True,
-            )
 
     st.rerun()
-
-# ========== 原对话历史功能的主对话区域 - 暂时注释 ==========
-# # 主对话区域
-# current_chat = st.session_state.chats.get(st.session_state.current_chat_id, {})
-
-# if current_chat:
-#     # 显示当前对话标题
-#     # st.markdown(f"### {current_chat.get('title', '新对话')}")
-#     # st.markdown(f"*创建时间: {current_chat.get('created_at', '')}*")
-
-#     # 显示对话历史
-#     for message in current_chat.get("messages", []):
-#         if message["role"] == "user":
-#             st.markdown(f'<div class="message-container"><div class="user-message">User: {message["content"]}</div></div>', unsafe_allow_html=True)
-#         else:
-#             st.markdown(f'<div class="message-container"><div class="ai-message">Chat: {message["content"]}</div></div>', unsafe_allow_html=True)
-
-#     # 输入框
-#     user_input = st.chat_input("请输入您的问题, 例如: 分析玩家123456789在比赛7891234567中的表现")
-
-#     if user_input:
-#         # 添加用户消息到当前对话
-#         current_chat["messages"].append({"role": "user", "content": user_input})
-
-#         # 更新对话标题（如果是第一条消息）
-#         if len(current_chat["messages"]) == 1:
-#             current_chat["title"] = get_chat_title(current_chat["messages"])
-
-#         # 显示用户消息
-#         st.markdown(f'<div class="message-container"><div class="user-message">👤 {user_input}</div></div>', unsafe_allow_html=True)
-
-#         # AI 处理
-#         with st.spinner("🤖 AI正在分析中..."):
-#             try:
-#                 response = manual_agent(user_input, model, tools)
-#                 ai_response = response['messages'][-1].content
-
-#                 # 添加AI回复到当前对话
-#                 current_chat["messages"].append({"role": "assistant", "content": ai_response})
-
-#                 # 显示AI回复
-#                 st.markdown(f'<div class="message-container"><div class="ai-message">🤖 {ai_response}</div></div>', unsafe_allow_html=True)
-
-#             except Exception as e:
-#                 error_msg = f"抱歉，处理您的请求时出现错误：{str(e)}"
-#                 current_chat["messages"].append({"role": "assistant", "content": error_msg})
-#                 st.markdown(f'<div class="message-container"><div class="ai-message">🤖 {error_msg}</div></div>', unsafe_allow_html=True)
-
-#         # 保存对话历史
-#         st.session_state.chats[st.session_state.current_chat_id] = current_chat
-#         save_chats(st.session_state.chats)
-#         st.rerun()
-
-# else:
-#     st.error("当前对话不存在，请创建新对话")
-# ========== 原对话历史功能结束 ==========

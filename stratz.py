@@ -23,13 +23,14 @@ def get_player_data(steam_id: int, match_id: int):
         "Authorization": f"Bearer {api_token}",
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0",
         "Content-Type": "application/json",
-        "Accept": "application/json"
+        "Accept": "application/json",
     }
 
     query = """
-    query GetRecentMatches($id: Long!, $steamAccountId: Long!){
+    query GetMatchData($id: Long!, $steamAccountId: Long!){
         match(id: $id) {
             durationSeconds
+            didRadiantWin
             players(steamAccountId: $steamAccountId) {
                 playerSlot
                 kills
@@ -42,6 +43,35 @@ def get_player_data(steam_id: int, match_id: int):
                 heroDamage
                 towerDamage
                 heroHealing
+                goldPerMinute
+                experiencePerMinute
+                hero {
+                    displayName
+                    shortName
+                }
+                items {
+                    itemId
+                    item {
+                        displayName
+                    }
+                }
+                stats {
+                    killsPerMinute
+                    deathsPerMinute
+                    assistsPerMinute
+                    creepScore
+                    neutralScore
+                }
+            }
+            players {
+                playerSlot
+                kills
+                deaths
+                assists
+                networth
+                hero {
+                    displayName
+                }
             }
         }
     }
