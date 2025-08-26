@@ -61,7 +61,14 @@ cp .env.example .env
 
 5. 测试配置（可选）
 ```bash
+# 完整配置测试
 python test_config.py
+
+# 快速测试 Stratz Tool
+python quick_test.py
+
+# 详细的 Tool 验证
+python test_stratz_tool.py
 ```
 
 6. 运行应用
@@ -204,6 +211,13 @@ A:
 1. 确认玩家ID和比赛ID格式正确
 2. 检查比赛是否存在且为公开比赛
 3. 确认Stratz API密钥权限
+4. 运行 `python quick_test.py` 查看详细错误信息
+
+**Q: 如何验证 Tool 是否被正确调用**
+A:
+1. 运行 `python test_stratz_tool.py` 进行完整验证
+2. 查看控制台输出中的 `[TOOL]` 标记
+3. 使用 `python monitor_tool_calls.py` 实时监控调用
 
 **Q: 界面显示异常**
 A: 

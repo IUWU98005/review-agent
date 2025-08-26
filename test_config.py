@@ -61,18 +61,48 @@ def test_stratz_connection():
     try:
         from stratz import get_player_data
 
-        # 使用一个示例ID进行测试（这个可能会失败，但能测试API连接）
+        # 使用一个示例ID进行测试
+        print("调用 get_player_data tool...")
         result = get_player_data(123456789, 7891234567)
 
         if result is None:
-            print("⚠️  Stratz API连接成功，但示例数据未找到（这是正常的）")
+            print("⚠️  Stratz API返回None，可能是数据不存在")
+            return False
+        elif isinstance(result, dict) and "error" in result:
+            print(f"⚠️  Stratz API返回错误: {result['error']}")
+            return False
         else:
             print("✅ Stratz API连接成功并获取到数据")
-
-        return True
+            return True
 
     except Exception as e:
         print(f"❌ Stratz API连接失败: {e}")
+        return False
+
+
+def test_tool_registration():
+    """测试Tool注册"""
+    print("\n🔧 测试Tool注册...")
+
+    try:
+        from agent import tools
+
+        print(f"已注册工具数量: {len(tools)}")
+
+        tool_names = []
+        for tool in tools:
+            tool_names.append(tool.name)
+            print(f"  - {tool.name}: {tool.description[:50]}...")
+
+        if "get_player_data" in tool_names:
+            print("✅ get_player_data tool 已正确注册")
+            return True
+        else:
+            print("❌ get_player_data tool 未找到")
+            return False
+
+    except Exception as e:
+        print(f"❌ Tool注册测试失败: {e}")
         return False
 
 
@@ -116,6 +146,10 @@ def main():
 
     # 测试环境变量
     if not test_env_config():
+        all_tests_passed = False
+
+    # 测试Tool注册
+    if not test_tool_registration():
         all_tests_passed = False
 
     # 测试API连接
