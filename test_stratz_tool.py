@@ -31,7 +31,8 @@ def test_direct_tool_call():
 
         if isinstance(result, dict):
             print("📊 返回数据结构:")
-            print(json.dumps(result, indent=2, ensure_ascii=False)[:500] + "...")
+            print(
+                json.dumps(result, indent=2, ensure_ascii=False)[:500] + "...")
 
         return True
 
@@ -70,11 +71,8 @@ def test_tool_in_agent():
 
             # 显示消息内容
             if hasattr(message, "content") and message.content:
-                content = (
-                    message.content[:200] + "..."
-                    if len(message.content) > 200
-                    else message.content
-                )
+                content = (message.content[:200] + "..."
+                           if len(message.content) > 200 else message.content)
                 print(f"内容: {content}")
 
         return True
@@ -118,7 +116,9 @@ def test_api_connection():
 
     try:
         scraper = cloudscraper.create_scraper()
-        response = scraper.post(url=url, headers=headers, json={"query": test_query})
+        response = scraper.post(url=url,
+                                headers=headers,
+                                json={"query": test_query})
 
         if response.status_code == 200:
             print("✅ Stratz API 连接成功!")
