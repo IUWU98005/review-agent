@@ -80,6 +80,7 @@ def get_player_data(steam_id: int, match_id: int):
     variables = {"id": match_id, "steamAccountId": steam_id}
 
     scraper = cloudscraper.create_scraper()
+
     response = scraper.post(
         url=url,
         headers=headers,
@@ -90,6 +91,4 @@ def get_player_data(steam_id: int, match_id: int):
         data = response.json()
         return data
     else:
-        print(f"Error fetching player data: {response.status_code}")
-        print(response.text)
         return None
