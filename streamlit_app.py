@@ -11,7 +11,6 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-
 st.markdown(
     """
 <style>
@@ -134,22 +133,16 @@ with st.expander("快速分析", expanded=False):
     with col2:
         match_id = st.text_input("比赛ID", placeholder="7891234567")
 
-    analysis_mode = st.selectbox(
-        "分析模式", ["综合分析", "彩虹屁模式", "毒舌模式"], index=0
-    )
+    analysis_mode = st.selectbox("分析模式", ["综合分析", "彩虹屁模式", "毒舌模式"], index=0)
 
     if st.button("开始分析", type="primary"):
         if player_id and match_id:
             if analysis_mode == "综合分析":
                 query = f"分析玩家{player_id}在比赛{match_id}中的表现"
             elif analysis_mode == "彩虹屁模式":
-                query = (
-                    f"夸奖玩家{player_id}在比赛{match_id}中的亮眼表现，用网络用语吹爆他"
-                )
+                query = (f"夸奖玩家{player_id}在比赛{match_id}中的亮眼表现，用网络用语吹爆他")
             else:
-                query = (
-                    f"批评玩家{player_id}在比赛{match_id}中的表现，用网络用语狠狠吐槽"
-                )
+                query = (f"批评玩家{player_id}在比赛{match_id}中的表现，用网络用语狠狠吐槽")
 
             st.session_state.quick_query = query
             st.rerun()
@@ -161,7 +154,6 @@ if st.session_state.messages:
     if st.button("清除对话"):
         st.session_state.messages = []
         st.rerun()
-
 
 # ========== 主对话区域 ==========
 
@@ -188,15 +180,17 @@ if hasattr(st.session_state, "quick_query"):
             ai_response = response["messages"][-1].content
 
             # 添加AI回复
-            st.session_state.messages.append(
-                {"role": "assistant", "content": ai_response}
-            )
+            st.session_state.messages.append({
+                "role": "assistant",
+                "content": ai_response
+            })
 
         except Exception as e:
             error_msg = f"抱歉，处理您的请求时出现错误：{str(e)}"
-            st.session_state.messages.append(
-                {"role": "assistant", "content": error_msg}
-            )
+            st.session_state.messages.append({
+                "role": "assistant",
+                "content": error_msg
+            })
 
     st.rerun()
 
@@ -205,15 +199,13 @@ if not st.session_state.messages:
     st.info("💡 输入问题开始对话，或使用上方的快速分析功能")
 
     with st.expander("使用示例"):
-        st.markdown(
-            """
+        st.markdown("""
         **综合分析：** 分析玩家123456789在比赛7891234567中的表现
         
         **彩虹屁模式：** 夸夸玩家123456789的神仙操作
         
         **毒舌模式：** 吐槽玩家123456789的菜鸡表现
-        """
-        )
+        """)
 
 # 显示对话历史
 for message in st.session_state.messages:
@@ -236,13 +228,11 @@ if user_input:
     st.session_state.messages.append({"role": "user", "content": user_input})
 
     # 智能判断使用哪个agent
-    if any(
-        keyword in user_input for keyword in ["夸", "吹", "彩虹屁", "厉害", "牛", "强"]
-    ):
+    if any(keyword in user_input
+           for keyword in ["夸", "吹", "彩虹屁", "厉害", "牛", "强"]):
         agent_func = praise_agent
-    elif any(
-        keyword in user_input for keyword in ["批评", "吐槽", "菜", "差", "垃圾", "坑"]
-    ):
+    elif any(keyword in user_input
+             for keyword in ["批评", "吐槽", "菜", "差", "垃圾", "坑"]):
         agent_func = roast_agent
     else:
         agent_func = agent
@@ -254,14 +244,16 @@ if user_input:
             ai_response = response["messages"][-1].content
 
             # 添加AI回复
-            st.session_state.messages.append(
-                {"role": "assistant", "content": ai_response}
-            )
+            st.session_state.messages.append({
+                "role": "assistant",
+                "content": ai_response
+            })
 
         except Exception as e:
             error_msg = f"抱歉，处理您的请求时出现错误：{str(e)}"
-            st.session_state.messages.append(
-                {"role": "assistant", "content": error_msg}
-            )
+            st.session_state.messages.append({
+                "role": "assistant",
+                "content": error_msg
+            })
 
     st.rerun()
